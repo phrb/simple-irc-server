@@ -325,6 +325,17 @@ int main () {
     chans = add_channel(chans, "Channel004", 3, users);
     printf("length(chans) == 1?: %d\n", length(chans));
     print_node_list(chans);
+    chans = remove_channel(chans, "Channel004");
+    print_node_list(chans);
 
+    chans = empty_channel_list();
+    users = empty_user_list();
+
+    chans = add_channel(chans, "Chan01", 332, users);
+    Channel *chan = (Channel *) chans->payload;
+    print_node_list(chan->users);
+    chan->users = add_user(chan->users, "aaadrvan", 2, chan->id, 222);
+    print_node_list(chan->users);
+    
     return 0;
 };
