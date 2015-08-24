@@ -27,6 +27,48 @@ typedef enum {
     PAYLOAD_CHANNEL
 } Payload;
 
+int print_node_list(Node *list) {
+    Node *first = list;
+    Node *p = first;
+
+    if(list == NULL) {
+        printf("Empty List.\n");
+        return 0;
+    }
+    else if(p->payload_type == PAYLOAD_USER) {
+        printf("User Node List. Payload=%d\n", p->payload_type);
+        User *user = (User *) p->payload;
+        printf("\tName   : %s\n", user->name);
+        printf("\tID     : %d\n", user->id);
+        printf("\tChannel: %d\n", user->current_channel);
+        printf("\tSocket : %d\n", user->socket);
+        p = p->next;
+        while(p != first) {
+            user = (User *) p->payload;
+            printf("\tName   : %s\n", user->name);
+            printf("\tID     : %d\n", user->id);
+            printf("\tChannel: %d\n", user->current_channel);
+            printf("\tSocket : %d\n", user->socket);
+            p = p->next;
+        };
+    }
+    else if(p->payload_type == PAYLOAD_CHANNEL) {
+        printf("Channel Node List. Payload=%d\n", p->payload_type);
+        Channel *chan = (Channel *) p->payload;
+        printf("\tName: %s\n", chan->name);
+        printf("\tID  : %d\n", chan->id);
+        p = p->next;
+        while(p != first) {
+            chan = (Channel *) p->payload;
+            printf("\tName: %s\n", chan->name);
+            printf("\tID  : %d\n", chan->id);
+            p = p->next;
+        };
+    };
+    return 0;
+};
+
+
 Node *add_node(Node *list, int payload_type) {
     Node *node;
     if(payload_type == PAYLOAD_USER){
@@ -73,7 +115,6 @@ Node *remove_node(Node *list) {
         free(p);
         return list;
     };
-
 };
 
 int length(Node *list) {
@@ -101,20 +142,36 @@ Node *remove_channel(Node *list, char name[9]) {
     }
     else {
         Node *p       = list;
-        Channel *chan = p->payload;
+        Channel *chan = (Channel *) p->payload;
+        Node *users;
+        int size, i;
         if(strcmp(chan->name, name) == 0) {
+            users = chan->users;
+            size  = length(users);
+            printf("Removing Channel. Users: %d\n", size);
+            print_node_list(users);
+            for(i = 0; i < size; i++) {
+                users = remove_node(users->prev);
+                print_node_list(users);
+            };
+            printf("Done.\n");
             list = remove_node(p);
             return list;
         };
         p    = p->next;
-        chan = p->payload;
+        chan = (Channel *) p->payload;
         while(p != list) {
             if(strcmp(chan->name, name) == 0) {
+                users = chan->users;
+                size  = length(users);
+                for(i = 0; i < size; i++) {
+                    users = remove_node(users);
+                };
                 list = remove_node(p);
                 return list;
             };
             p    = p->next;
-            chan = p->payload;
+            chan = (Channel *) p->payload;
         };
         printf("Channel %s not on list.\n", name);
         return list;
@@ -125,15 +182,24 @@ Node *add_channel(Node *list, char name[9], int id, Node* users) {
     if(list == NULL) {
         return list;
     };
-    Channel *chan = &(list->payload);
+    Channel *chan = (Channel *) list->payload;
     if(list->payload_type != PAYLOAD_CHANNEL) {
         return list;
     }
     else if(chan->id != -1) {
         list = add_node(list, PAYLOAD_CHANNEL);
     };
-    chan        = &(list->payload);
-    chan->id    = id;
+    chan       = (Channel *) list->payload;
+    chan->id   = id;
+    Node *p    = users;
+    User *user = (User *) p->payload;
+    int size   = length(users);
+    int i;
+    for(i = 0; i < size; i++) {
+        user->current_channel = id;
+        p                     = p->next;
+        user                  = (User *) p->payload;
+    };
     chan->users = users;
     strcpy(chan->name, name);
     return list;
@@ -143,14 +209,14 @@ Node *add_user(Node *list, char name[9], int id, int channel, int socket) {
     if(list == NULL) {
         return list;
     };
-    User *user = &(list->payload);
+    User *user = (User *) list->payload;
     if(list->payload_type != PAYLOAD_USER) {
         return list;
     }
     else if (user->id != -1) {
         list = add_node(list, PAYLOAD_USER);
     };
-    user                  = &(list->payload);
+    user                  = (User *) list->payload;
     user->id              = id;
     user->current_channel = channel;
     user->socket          = socket;
@@ -164,20 +230,20 @@ Node *remove_user(Node *list, char name[9]) {
     }
     else {
         Node *p    = list;
-        User *user = p->payload;
+        User *user = (User *) p->payload;
         if(strcmp(user->name, name) == 0) {
             list = remove_node(p);
             return list;
         };
         p    = p->next;
-        user = p->payload;
+        user = (User *) p->payload;
         while(p != list) {
             if(strcmp(user->name, name) == 0) {
                 list = remove_node(p);
                 return list;
             };
             p    = p->next;
-            user = p->payload;
+            user = (User *) p->payload;
         };
         printf("User %s not on list.\n", name);
         return list;
@@ -189,7 +255,7 @@ Node *empty_channel_list() {
     chans->next         = chans;
     chans->prev         = chans;
     chans->payload_type = PAYLOAD_CHANNEL;
-    Channel *chan       = &(chans->payload);
+    Channel *chan       = (Channel *) chans->payload;
     chan->id            = -1;
     return chans;
 };
@@ -199,50 +265,9 @@ Node *empty_user_list() {
     users->next         = users;
     users->prev         = users;
     users->payload_type = PAYLOAD_USER;
-    User *user          = &(users->payload);
+    User *user          = (User *) users->payload;
     user->id            = -1;
     return users;
-};
-
-int print_node_list(Node *list) {
-    Node *first = list;
-    Node *p = first;
-
-    if(list == NULL) {
-        printf("Empty List.\n");
-        return 0;
-    }
-    else if(p->payload_type == PAYLOAD_USER) {
-        printf("User Node List. Payload=%d\n", p->payload_type);
-        User *user = p->payload;
-        printf("\tName   : %s\n", user->name);
-        printf("\tID     : %d\n", user->id);
-        printf("\tChannel: %d\n", user->current_channel);
-        printf("\tSocket : %d\n", user->socket);
-        p = p->next;
-        while(p != first) {
-            user = p->payload;
-            printf("\tName   : %s\n", user->name);
-            printf("\tID     : %d\n", user->id);
-            printf("\tChannel: %d\n", user->current_channel);
-            printf("\tSocket : %d\n", user->socket);
-            p = p->next;
-        };
-    }
-    else if(p->payload_type == PAYLOAD_CHANNEL) {
-        printf("Channel Node List. Payload=%d\n", p->payload_type);
-        Channel *chan = p->payload;
-        printf("\tName: %s\n", chan->name);
-        printf("\tID  : %d\n", chan->id);
-        p = p->next;
-        while(p != first) {
-            chan = p->payload;
-            printf("\tName: %s\n", chan->name);
-            printf("\tID  : %d\n", chan->id);
-            p = p->next;
-        };
-    };
-    return 0;
 };
 
 int main () {
@@ -254,38 +279,52 @@ int main () {
     users = add_user(users, "user_00003", 3, 1, 11122);
     print_node_list(users);
 
+    Node *users2 = empty_user_list();
+    users2 = add_user(users2, "user_00004", 4, 1, 11122);
+    print_node_list(users2);
+    users2 = add_user(users2, "user_00005", 5, 1, 11122);
+    print_node_list(users2);
+
     Node *chans = empty_channel_list();
     printf("length(chans) == 1?: %d\n", length(chans));
     chans = add_channel(chans, "Channel001", 0, users);
     printf("length(chans) == 1?: %d\n", length(chans));
     print_node_list(chans);
-    chans = add_channel(chans, "Channel002", 1, users);
+    print_node_list(users);
+
+    chans = add_channel(chans, "Channel002", 1, users2);
     printf("length(chans) == 2?: %d\n", length(chans));
     print_node_list(chans);
+    print_node_list(users2);
+
     chans = remove_channel(chans, "Channel023");
     printf("length(chans) == 2?: %d\n", length(chans));
     print_node_list(chans);
+
     chans = remove_channel(chans, "Channel002");
     printf("length(chans) == 1?: %d\n", length(chans));
     print_node_list(chans);
+
     chans = remove_channel(chans, "Channel001");
     print_node_list(chans);
     chans = remove_channel(chans, "Channel001");
     print_node_list(chans);
+
+    users = empty_user_list();
+    users = add_user(users, "user_00001", 1, 1, 12121);
+    print_node_list(users);
+    users = add_user(users, "user_00002", 2, 1, 12312);
+    print_node_list(users);
+    users = add_user(users, "user_00003", 3, 1, 11122);
+    print_node_list(users);
+    users = remove_user(users, "user_00003");
+    print_node_list(users);
+    
     chans = empty_channel_list();
     printf("length(chans) == 1?: %d\n", length(chans));
     chans = add_channel(chans, "Channel004", 3, users);
     printf("length(chans) == 1?: %d\n", length(chans));
     print_node_list(chans);
-
-    users = remove_user(users, "user_00003");
-    print_node_list(users);
-    users = remove_user(users, "user_00003");
-    print_node_list(users);
-    users = remove_user(users, "user_00001");
-    print_node_list(users);
-    users = remove_user(users, "user_00002");
-    print_node_list(users);
 
     return 0;
 };
