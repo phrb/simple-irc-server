@@ -45,18 +45,21 @@
 #define MAXLINE 4096
 
 int main (int argc, char **argv) {
-   /* Os sockets. Um que será o socket que vai escutar pelas conexões
-    * e o outro que vai ser o socket específico de cada conexão */
+    /* Os sockets. Um que será o socket que vai escutar pelas conexões
+     * e o outro que vai ser o socket específico de cada conexão */
     int listenfd, connfd;
-   /* Informações sobre o socket (endereço e porta) ficam nesta struct */
+    /* Informações sobre o socket (endereço e porta) ficam nesta struct */
     struct sockaddr_in servaddr;
-   /* Retorno da função fork para saber quem é o processo filho e quem
-    * é o processo pai */
-   pid_t childpid;
-   /* Armazena linhas recebidas do cliente */
+    /* Retorno da função fork para saber quem é o processo filho e quem
+     * é o processo pai */
+    pid_t childpid;
+    /* Armazena linhas recebidas do cliente */
     char    recvline[MAXLINE + 1];
-   /* Armazena o tamanho da string lida do cliente */
-   ssize_t  n;
+    /* Armazena o tamanho da string lida do cliente */
+    ssize_t  n;
+
+    int chan[2];
+    pipe(chan);
 
     if (argc != 2) {
         fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
@@ -64,27 +67,27 @@ int main (int argc, char **argv) {
         exit(1);
     }
 
-   /* Criação de um socket. Eh como se fosse um descritor de arquivo. Eh
-    * possivel fazer operacoes como read, write e close. Neste
-    * caso o socket criado eh um socket IPv4 (por causa do AF_INET),
-    * que vai usar TCP (por causa do SOCK_STREAM), já que o IRC
-    * funciona sobre TCP, e será usado para uma aplicação convencional sobre
-    * a Internet (por causa do número 0) */
+    /* Criação de um socket. Eh como se fosse um descritor de arquivo. Eh
+     * possivel fazer operacoes como read, write e close. Neste
+     * caso o socket criado eh um socket IPv4 (por causa do AF_INET),
+     * que vai usar TCP (por causa do SOCK_STREAM), já que o IRC
+     * funciona sobre TCP, e será usado para uma aplicação convencional sobre
+     * a Internet (por causa do número 0) */
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket :(\n");
         exit(2);
     }
 
-   /* Agora é necessário informar os endereços associados a este
-    * socket. É necessário informar o endereço / interface e a porta,
-    * pois mais adiante o socket ficará esperando conexões nesta porta
-    * e neste(s) endereços. Para isso é necessário preencher a struct
-    * servaddr. É necessário colocar lá o tipo de socket (No nosso
-    * caso AF_INET porque é IPv4), em qual endereço / interface serão
-    * esperadas conexões (Neste caso em qualquer uma -- INADDR_ANY) e
-    * qual a porta. Neste caso será a porta que foi passada como
-    * argumento no shell (atoi(argv[1]))
-    */
+    /* Agora é necessário informar os endereços associados a este
+     * socket. É necessário informar o endereço / interface e a porta,
+     * pois mais adiante o socket ficará esperando conexões nesta porta
+     * e neste(s) endereços. Para isso é necessário preencher a struct
+     * servaddr. É necessário colocar lá o tipo de socket (No nosso
+     * caso AF_INET porque é IPv4), em qual endereço / interface serão
+     * esperadas conexões (Neste caso em qualquer uma -- INADDR_ANY) e
+     * qual a porta. Neste caso será a porta que foi passada como
+     * argumento no shell (atoi(argv[1]))
+     */
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -94,20 +97,41 @@ int main (int argc, char **argv) {
         exit(3);
     }
 
-   /* Como este código é o código de um servidor, o socket será um
-    * socket passivo. Para isto é necessário chamar a função listen
-    * que define que este é um socket de servidor que ficará esperando
-    * por conexões nos endereços definidos na função bind. */
+    /* Como este código é o código de um servidor, o socket será um
+     * socket passivo. Para isto é necessário chamar a função listen
+     * que define que este é um socket de servidor que ficará esperando
+     * por conexões nos endereços definidos na função bind. */
     if (listen(listenfd, LISTENQ) == -1) {
         perror("listen :(\n");
         exit(4);
     }
 
-   printf("[Servidor no ar. Aguardando conexoes na porta %s]\n",argv[1]);
-   printf("[Para finalizar, pressione CTRL+c ou rode um kill ou killall]\n");
+    printf("[Servidor no ar. Aguardando conexoes na porta %s]\n",argv[1]);
+    printf("[Para finalizar, pressione CTRL+c ou rode um kill ou killall]\n");
 
-   /* O servidor no final das contas é um loop infinito de espera por
-    * conexões e processamento de cada uma individualmente */
+    if( (childpid = fork()) == 0) {
+        int users[64];
+        close(chan[1]);
+        while ((n = read(chan[0], recvline, MAXLINE)) > 0) {
+            recvline[n] = 0;
+            char line[n];
+            strcpy(line, recvline);
+            char *c = strtok(line, " ");
+            if(c != NULL) {
+                if(strcmp(c, "add_user") == 0) {
+                    printf("Adding user: %s\n", strtok(NULL, " "));
+                };
+                while(strtok(NULL, " ") != NULL){};
+            };
+            //if(strcmp(strtok(NULL, " "), "add_user")) {
+            //    printf(strtok(NULL, " "));
+            //};
+            //write(chan[1], recvline, strlen(recvline));
+        };
+    };
+
+    /* O servidor no final das contas é um loop infinito de espera por
+     * conexões e processamento de cada uma individualmente */
     for (;;) {
         /* O socket inicial que foi criado é o socket que vai aguardar
          * pela conexão na porta especificada. Mas pode ser que existam
@@ -119,8 +143,13 @@ int main (int argc, char **argv) {
         if ((connfd = accept(listenfd, (struct sockaddr *) NULL, NULL)) == -1 ) {
             perror("accept :(\n");
             exit(5);
-        }
-
+        };
+        char *newuser = malloc(MAXLINE + 1);
+        char usersocket[15];
+        strcat(newuser, "add_user ");
+        sprintf(usersocket, "%d", connfd);
+        strcat(newuser, usersocket);
+        write(chan[1], newuser, strlen(newuser));
         /* Agora o servidor precisa tratar este cliente de forma
          * separada. Para isto é criado um processo filho usando a
          * função fork. O processo vai ser uma cópia deste. Depois da
@@ -133,7 +162,6 @@ int main (int argc, char **argv) {
          * processo filho. */
         if ( (childpid = fork()) == 0) {
             /**** PROCESSO FILHO ****/
-            printf("[Uma conexao aberta]\n");
             /* Já que está no processo filho, não precisa mais do socket
              * listenfd. Só o processo pai precisa deste socket. */
             close(listenfd);
@@ -160,9 +188,10 @@ int main (int argc, char **argv) {
                 if ((fputs(recvline,stdout)) == EOF) {
                     perror("fputs :( \n");
                     exit(6);
-                }
-                write(connfd, recvline, strlen(recvline));
-            }
+                };
+                write(chan[1], recvline, strlen(recvline));
+                //write(connfd, recvline, strlen(recvline));
+            };
             /* ========================================================= */
             /* ========================================================= */
             /*                         EP1 FIM                           */
@@ -172,6 +201,7 @@ int main (int argc, char **argv) {
             /* Após ter feito toda a troca de informação com o cliente,
              * pode finalizar o processo filho */
             printf("[Uma conexao fechada]\n");
+            close(connfd);
             exit(0);
         }
         /**** PROCESSO PAI ****/

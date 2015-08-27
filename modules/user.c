@@ -67,7 +67,7 @@ Node *remove_node(Node *list) {
 };
 
 int length(Node *list) {
-    if(list == NULL) {
+    if(list == NULL || (list->payload)->id == -1) {
         return 0;
     }
     else {

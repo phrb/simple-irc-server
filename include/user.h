@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #ifndef USER_H
 #define USER_H
@@ -10,6 +11,8 @@ typedef struct _User {
     int id;
     int current_channel;
     int socket;
+    pthread_t thread;
+    pthread_mutex_t socket_mutex;
 } User;
 
 typedef struct _Node {
