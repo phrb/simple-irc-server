@@ -21,7 +21,9 @@
 Node *user_list;
 pthread_mutex_t user_list_mutex;
 
-void user_loop(User *);
+void connect_user(User *);
+char *get_command(char[MAXLINE + 1], ssize_t);
+void receive_messages(User *);
 
 int main(int argc, char **argv) {
     int server_socket, user_socket;
@@ -68,32 +70,74 @@ int main(int argc, char **argv) {
         pthread_mutex_unlock(&user_list_mutex);
         new_user = user_list->payload;
 
-        pthread_create(&(new_user->thread), NULL, (void * (*) (void *)) user_loop, new_user); 
+        pthread_create(&(new_user->thread), NULL, (void * (*) (void *)) connect_user, new_user);
     };
 };
 
-void user_loop(User *user) {
-    printf("Got to user_loop!!\n");
+char *get_command(char line[MAXLINE + 1], ssize_t n) {
+    char *command = malloc(n);
+    command       = strcpy(command, line);
+    return strtok(command, " \t\r\n");
+};
+
+void connect_user(User *user) {
+    printf("[Usuario %d conectou-se ao servidor, esperando mensagens]\n", user->id);
     char recvline[MAXLINE + 1];
     ssize_t n;
-    for(;;) {
+
+    pthread_mutex_lock(&user->socket_mutex);
+    n = read(user->socket, recvline, MAXLINE);
+    pthread_mutex_unlock(&user->socket_mutex);
+
+    while (n > 0) {
+        recvline[n] = 0;
+        printf("[Usuario %d enviou:] ", user->id);
+        if ((fputs(recvline,stdout)) == EOF) {
+            fprintf(stderr, "Erro chamando fputs: %s\n", strerror(errno));
+            exit(6);
+        };
+        printf("get_command(recvline, n) == %s\n", get_command(recvline, n));
+        if(strcmp(get_command(recvline, n), "CONNECT") == 0) {
+            break;
+        };
         pthread_mutex_lock(&user->socket_mutex);
         n = read(user->socket, recvline, MAXLINE);
         pthread_mutex_unlock(&user->socket_mutex);
-        while (n > 0) {
-            recvline[n] = 0;
-            printf("[Usuario %d enviou:] ", user->id);
-            if ((fputs(recvline,stdout)) == EOF) {
-                fprintf(stderr, "Erro chamando fputs: %s\n", strerror(errno));
-                exit(6);
-            };
-            pthread_mutex_lock(&user->socket_mutex);
-            write(user->socket, recvline, strlen(recvline));
-            pthread_mutex_unlock(&user->socket_mutex);
+    };
+    receive_messages(user);
+};
 
-            pthread_mutex_lock(&user->socket_mutex);
-            n = read(user->socket, recvline, MAXLINE);
-            pthread_mutex_unlock(&user->socket_mutex);
+void receive_messages(User *user) {
+    printf("[Usuario %d entrou no canal principal]\n", user->id);
+    char recvline[MAXLINE + 1];
+    ssize_t n;
+
+    char *welcome = "[Voce entrou no canal principal]\n";
+    char *prompt  = "[IRCserver Principal] <Usuario>: ";
+    pthread_mutex_lock(&user->socket_mutex);
+    write(user->socket, welcome, strlen(welcome));
+    write(user->socket, prompt, strlen(prompt));
+    pthread_mutex_unlock(&user->socket_mutex);
+
+    pthread_mutex_lock(&user->socket_mutex);
+    n = read(user->socket, recvline, MAXLINE);
+    pthread_mutex_unlock(&user->socket_mutex);
+
+    while (n > 0) {
+        recvline[n] = 0;
+        printf("[Usuario %d enviou:] ", user->id);
+        if ((fputs(recvline,stdout)) == EOF) {
+            fprintf(stderr, "Erro chamando fputs: %s\n", strerror(errno));
+            exit(6);
         };
+        pthread_mutex_lock(&user->socket_mutex);
+        write(user->socket, prompt, strlen(prompt));
+        pthread_mutex_unlock(&user->socket_mutex);
+        /*
+         * Escrever em todos os logados no canal.
+         */
+        pthread_mutex_lock(&user->socket_mutex);
+        n = read(user->socket, recvline, MAXLINE);
+        pthread_mutex_unlock(&user->socket_mutex);
     };
 };
