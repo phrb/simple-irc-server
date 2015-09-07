@@ -23,7 +23,7 @@ pthread_mutex_t user_list_mutex;
 
 void connect_user(User *);
 char *get_command(char[MAXLINE + 1], ssize_t);
-void receive_messages(User *);
+void receive_messages(User *, char *);
 
 int main(int argc, char **argv) {
     int server_socket, user_socket;
@@ -74,68 +74,107 @@ int main(int argc, char **argv) {
     };
 };
 
-char *get_command(char line[MAXLINE + 1], ssize_t n) {
-    char *command = malloc(n);
-    command       = strcpy(command, line);
-    return strtok(command, " \t\r\n");
+char *stradd(char *str1, char *str2) {
+    char *result = malloc(strlen(str1)+strlen(str2)+1);
+    strcpy(result, str1);
+    strcat(result, str2);
+    return result;    
+};
+
+char *strset(char *str) {
+    char *result = malloc(strlen(str)+1);
+    strcpy(result, str);
+    return result;    
 };
 
 void connect_user(User *user) {
     printf("[Usuario %d conectou-se ao servidor, esperando mensagens]\n", user->id);
     char recvline[MAXLINE + 1];
+    char *line = malloc(MAXLINE + 1);
+    char *command;
+    char *p;
+    char *send_message;
     ssize_t n;
 
     pthread_mutex_lock(&user->socket_mutex);
     n = read(user->socket, recvline, MAXLINE);
     pthread_mutex_unlock(&user->socket_mutex);
 
-    while (n > 0) {
+    while(n > 0) {
         recvline[n] = 0;
-        printf("[Usuario %d enviou:] ", user->id);
-        if ((fputs(recvline,stdout)) == EOF) {
-            fprintf(stderr, "Erro chamando fputs: %s\n", strerror(errno));
-            exit(6);
+        line = strcpy(line, recvline);
+        command = strtok(line, " \t\r\n/");
+        while(command != NULL) {
+            printf("[Usuario %d enviou \"%s\"]\n", user->id, command);
+            if(strcmp(command, "NICK") == 0) {
+                strcpy(user->name, strtok(NULL, " \t\r\n"));
+                send_message = strset(":localhost NOTICE * :*** Bem-vindo!.\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            }
+            else if(strcmp(command, "USER") == 0) {
+                send_message = strset(":localhost 001 ");
+                send_message = stradd(send_message, user->name);
+                send_message = stradd(send_message, ": Connected.\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            }
+            else if(strcmp(command, "PING") == 0) {
+                send_message = strset(":localhost PONG localhost :");
+                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
+                send_message = stradd(send_message, "\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            }
+            else if(strcmp(command, "WHO") == 0) {
+                send_message = strset(":localhost 352 localhost ");
+                send_message = stradd(send_message, user->name);
+                send_message = stradd(send_message, "\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+                send_message = strset(":localhost 315 ");
+                send_message = stradd(send_message, user->name);
+                send_message = stradd(send_message, " :End of /WHO list\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            }
+            else if(strcmp(command, "WHOIS") == 0) {
+                send_message = strset(":localhost 401 ");
+                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
+                send_message = stradd(send_message, " :No such nich/channel\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            }
+            else if(strcmp(command, "MODE") == 0) {
+                send_message = strset(":");
+                send_message = stradd(send_message, user->name);
+                send_message = stradd(send_message, " ");
+                send_message = stradd(send_message, command);
+                send_message = stradd(send_message, " ");
+                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
+                send_message = stradd(send_message, " ");
+                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
+                send_message = stradd(send_message, "\n");
+                printf(">Resposta: \"%s\"", send_message);
+                pthread_mutex_lock(&user->socket_mutex);
+                write(user->socket, send_message, strlen(send_message));
+                pthread_mutex_unlock(&user->socket_mutex);
+            };
+            command = strtok(NULL, " \t\r\n/");
         };
-        printf("get_command(recvline, n) == %s\n", get_command(recvline, n));
-        if(strcmp(get_command(recvline, n), "CONNECT") == 0) {
-            break;
-        };
-        pthread_mutex_lock(&user->socket_mutex);
-        n = read(user->socket, recvline, MAXLINE);
-        pthread_mutex_unlock(&user->socket_mutex);
-    };
-    receive_messages(user);
-};
 
-void receive_messages(User *user) {
-    printf("[Usuario %d entrou no canal principal]\n", user->id);
-    char recvline[MAXLINE + 1];
-    ssize_t n;
-
-    char *welcome = "[Voce entrou no canal principal]\n";
-    char *prompt  = "[IRCserver Principal] <Usuario>: ";
-    pthread_mutex_lock(&user->socket_mutex);
-    write(user->socket, welcome, strlen(welcome));
-    write(user->socket, prompt, strlen(prompt));
-    pthread_mutex_unlock(&user->socket_mutex);
-
-    pthread_mutex_lock(&user->socket_mutex);
-    n = read(user->socket, recvline, MAXLINE);
-    pthread_mutex_unlock(&user->socket_mutex);
-
-    while (n > 0) {
-        recvline[n] = 0;
-        printf("[Usuario %d enviou:] ", user->id);
-        if ((fputs(recvline,stdout)) == EOF) {
-            fprintf(stderr, "Erro chamando fputs: %s\n", strerror(errno));
-            exit(6);
-        };
-        pthread_mutex_lock(&user->socket_mutex);
-        write(user->socket, prompt, strlen(prompt));
-        pthread_mutex_unlock(&user->socket_mutex);
-        /*
-         * Escrever em todos os logados no canal.
-         */
         pthread_mutex_lock(&user->socket_mutex);
         n = read(user->socket, recvline, MAXLINE);
         pthread_mutex_unlock(&user->socket_mutex);
