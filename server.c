@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
             exit(5);
         };
         pthread_mutex_lock(&user_list_mutex);
-        user_list = add_user(user_list, "new_user", length(user_list), 0, user_socket);
+        user_list = add_user(user_list, "new_user", "new_host", length(user_list), 0, user_socket);
         pthread_mutex_unlock(&user_list_mutex);
         new_user = user_list->payload;
 
@@ -94,23 +94,28 @@ void connect_user(User *user) {
         while(command != NULL) {
             printf("[Usuario %d enviou \"%s\"]\n", user->id, command);
             if(strcmp(command, NICK) == 0) {
-                receive_nick(user, strtok(NULL, " \t\r\n/"), send_message);
+                receive_nick(user, user_list,
+                             strtok(NULL, " \t\r\n/"),
+                             send_message);
             }
             else if(strcmp(command, USER) == 0) {
-                receive_user(user, send_message);
+                strtok(NULL, " \t\r\n/");
+                receive_user(user, strtok(NULL, " \t\r\n/"), send_message);
             }
             else if(strcmp(command, PING) == 0) {
                 receive_ping(user, send_message);
             }
             else if(strcmp(command, WHO) == 0) {
-                receive_who(user, send_message);
+                receive_who(user_list, strtok(NULL, " \t\r\n/"), send_message);
             }
             else if(strcmp(command, WHOIS) == 0) {
-                receive_whois(user, send_message);
+                receive_whois(user, user_list,
+                              send_message);
             }
             else if(strcmp(command, MODE) == 0) {
                 strtok(NULL, " \t\r\n/");
-                receive_mode(user, strtok(NULL, " \t\r\n/"), send_message);
+                receive_mode(user, strtok(NULL, " \t\r\n/"),
+                             send_message);
             }
             else if(strcmp(command, QUIT) == 0) {
                 receive_quit(user);

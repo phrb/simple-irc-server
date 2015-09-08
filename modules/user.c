@@ -26,7 +26,6 @@ int print_node_list(Node *list) {
     return 0;
 };
 
-
 Node *add_node(Node *list) {
     Node *node = malloc(sizeof(Node));
     if(list == NULL) {
@@ -83,7 +82,7 @@ int length(Node *list) {
     };
 };
 
-Node *add_user(Node *list, char name[9], int id, int channel, int socket) {
+Node *add_user(Node *list, char *name, char *hostname, int id, int channel, int socket) {
     if(list == NULL) {
         return list;
     }
@@ -96,12 +95,15 @@ Node *add_user(Node *list, char name[9], int id, int channel, int socket) {
         user->id              = id;
         user->current_channel = channel;
         user->socket          = socket;
+        user->name            = malloc(strlen(name) + 1);
+        user->hostname        = malloc(strlen(hostname) + 1);
         strcpy(user->name, name);
+        strcpy(user->hostname, hostname);
         return list;
     };
 };
 
-Node *remove_user(Node *list, char name[9]) {
+Node *remove_user(Node *list, char *name) {
     if(list == NULL) {
         return NULL;
     }
@@ -152,7 +154,7 @@ User *get_user_by_id(Node *users, int id){
     return NULL;
 };
 
-User *get_user_by_name(Node *users, char name[9]) {
+User *get_user_by_name(Node *users, char *name) {
     int i;
     int list_length = length(users);
     Node *p         = users;
