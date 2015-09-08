@@ -1,3 +1,10 @@
+#include "../include/user.h"
+#include "../include/util.h"
+#include "../include/receive_commands.h"
+#include "../include/responses.h"
+#include "../include/errors.h"
+#include "../include/commands.h"
+
 void receive_nick(User *user, char *name, char *send_line) {
     if(name != NULL) {
         strcpy(user->name, name);
