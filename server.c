@@ -14,6 +14,7 @@
 
 #include "include/user.h"
 #include "include/util.h"
+#include "include/commands.h"
 #include "include/receive_commands.h"
 
 #define LISTENQ 1

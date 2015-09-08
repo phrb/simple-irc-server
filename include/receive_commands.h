@@ -14,14 +14,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "user.h"
-#include "util.h"
-#include "receive_commands.h"
-#include "responses.h"
-#include "errors.h"
-#include "commands.h"
-
-
 void receive_who(User *, char *);
 void receive_quit(User *);
 void receive_user(User *, char *);
