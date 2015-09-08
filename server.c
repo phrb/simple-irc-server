@@ -13,6 +13,8 @@
 #include <pthread.h>
 
 #include "include/user.h"
+#include "include/util.h"
+#include "include/receive_commands.h"
 
 #define LISTENQ 1
 #define MAXDATASIZE 100
@@ -22,8 +24,6 @@ Node *user_list;
 pthread_mutex_t user_list_mutex;
 
 void connect_user(User *);
-char *get_command(char[MAXLINE + 1], ssize_t);
-void receive_messages(User *, char *);
 
 int main(int argc, char **argv) {
     int server_socket, user_socket;
@@ -74,25 +74,11 @@ int main(int argc, char **argv) {
     };
 };
 
-char *stradd(char *str1, char *str2) {
-    char *result = malloc(strlen(str1)+strlen(str2)+1);
-    strcpy(result, str1);
-    strcat(result, str2);
-    return result;    
-};
-
-char *strset(char *str) {
-    char *result = malloc(strlen(str)+1);
-    strcpy(result, str);
-    return result;    
-};
-
 void connect_user(User *user) {
     printf("[Usuario %d conectou-se ao servidor, esperando mensagens]\n", user->id);
     char recvline[MAXLINE + 1];
     char *line = malloc(MAXLINE + 1);
     char *command;
-    char *p;
     char *send_message;
     ssize_t n;
 
@@ -106,71 +92,28 @@ void connect_user(User *user) {
         command = strtok(line, " \t\r\n/");
         while(command != NULL) {
             printf("[Usuario %d enviou \"%s\"]\n", user->id, command);
-            if(strcmp(command, "NICK") == 0) {
-                strcpy(user->name, strtok(NULL, " \t\r\n"));
-                send_message = strset(":localhost NOTICE * :*** Bem-vindo!.\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            if(strcmp(command, NICK) == 0) {
+                receive_nick(user, strtok(NULL, " \t\r\n/"), send_message);
             }
-            else if(strcmp(command, "USER") == 0) {
-                send_message = strset(":localhost 001 ");
-                send_message = stradd(send_message, user->name);
-                send_message = stradd(send_message, ": Connected.\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            else if(strcmp(command, USER) == 0) {
+                receive_user(user, send_message);
             }
-            else if(strcmp(command, "PING") == 0) {
-                send_message = strset(":localhost PONG localhost :");
-                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
-                send_message = stradd(send_message, "\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            else if(strcmp(command, PING) == 0) {
+                receive_ping(user, send_message);
             }
-            else if(strcmp(command, "WHO") == 0) {
-                send_message = strset(":localhost 352 localhost ");
-                send_message = stradd(send_message, user->name);
-                send_message = stradd(send_message, "\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
-                send_message = strset(":localhost 315 ");
-                send_message = stradd(send_message, user->name);
-                send_message = stradd(send_message, " :End of /WHO list\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            else if(strcmp(command, WHO) == 0) {
+                receive_who(user, send_message);
             }
-            else if(strcmp(command, "WHOIS") == 0) {
-                send_message = strset(":localhost 401 ");
-                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
-                send_message = stradd(send_message, " :No such nich/channel\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            else if(strcmp(command, WHOIS) == 0) {
+                receive_whois(user, send_message);
             }
-            else if(strcmp(command, "MODE") == 0) {
-                send_message = strset(":");
-                send_message = stradd(send_message, user->name);
-                send_message = stradd(send_message, " ");
-                send_message = stradd(send_message, command);
-                send_message = stradd(send_message, " ");
-                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
-                send_message = stradd(send_message, " ");
-                send_message = stradd(send_message, strtok(NULL, " \t\r\n/"));
-                send_message = stradd(send_message, "\n");
-                printf(">Resposta: \"%s\"", send_message);
-                pthread_mutex_lock(&user->socket_mutex);
-                write(user->socket, send_message, strlen(send_message));
-                pthread_mutex_unlock(&user->socket_mutex);
+            else if(strcmp(command, MODE) == 0) {
+                strtok(NULL, " \t\r\n/");
+                receive_mode(user, strtok(NULL, " \t\r\n/"), send_message);
+            }
+            else if(strcmp(command, QUIT) == 0) {
+                receive_quit(user);
+                return;
             };
             command = strtok(NULL, " \t\r\n/");
         };
