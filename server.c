@@ -14,6 +14,7 @@
 
 #include "include/user.h"
 #include "include/util.h"
+#include "include/text.h"
 #include "include/commands.h"
 #include "include/receive_commands.h"
 
@@ -67,8 +68,8 @@ int main(int argc, char **argv) {
             exit(5);
         };
         pthread_mutex_lock(&user_list_mutex);
-        user_list = add_user(user_list, "new_user", "new_host",
-                             length(user_list), "Programacao em Redes",
+        user_list = add_user(user_list, DUMMY_USER, DUMMY_HOST,
+                             length(user_list), DUMMY_CHANNEL,
                              user_socket);
         pthread_mutex_unlock(&user_list_mutex);
         new_user = user_list->payload;
@@ -94,7 +95,7 @@ void connect_user(User *user) {
         line = strcpy(line, recvline);
         command = strtok(line, " \t\r\n/");
         while(command != NULL) {
-            printf("[Usuario %d enviou \"%s\"]\n", user->id, command);
+            printf("[Usuario %s enviou o comando \"%s\"]\n", user->name, command);
             if(strcmp(command, NICK) == 0) {
                 receive_nick(user, user_list,
                              strtok(NULL, " \t\r\n/"),
