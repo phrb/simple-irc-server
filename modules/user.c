@@ -12,14 +12,14 @@ int print_node_list(Node *list) {
     User *user = (User *) p->payload;
     printf("\tName   : %s\n", user->name);
     printf("\tID     : %d\n", user->id);
-    printf("\tChannel: %d\n", user->current_channel);
+    printf("\tChannel: %s\n", user->current_channel);
     printf("\tSocket : %d\n", user->socket);
     p = p->next;
     while(p != first) {
         user = (User *) p->payload;
         printf("\tName   : %s\n", user->name);
         printf("\tID     : %d\n", user->id);
-        printf("\tChannel: %d\n", user->current_channel);
+        printf("\tChannel: %s\n", user->current_channel);
         printf("\tSocket : %d\n", user->socket);
         p = p->next;
     };
@@ -82,7 +82,7 @@ int length(Node *list) {
     };
 };
 
-Node *add_user(Node *list, char *name, char *hostname, int id, int channel, int socket) {
+Node *add_user(Node *list, char *name, char *hostname, int id, char *channel, int socket) {
     if(list == NULL) {
         return list;
     }
@@ -93,12 +93,13 @@ Node *add_user(Node *list, char *name, char *hostname, int id, int channel, int 
         };
         user                  = (User *) list->payload;
         user->id              = id;
-        user->current_channel = channel;
         user->socket          = socket;
         user->name            = malloc(strlen(name) + 1);
+        user->current_channel = malloc(strlen(channel) + 1);
         user->hostname        = malloc(strlen(hostname) + 1);
         strcpy(user->name, name);
         strcpy(user->hostname, hostname);
+        strcpy(user->current_channel, channel);
         return list;
     };
 };
@@ -169,8 +170,23 @@ User *get_user_by_name(Node *users, char *name) {
     return NULL;
 };
 
-int change_channel(User *user, int new_channel) {
-    user->current_channel = new_channel;
+User *get_user_by_channel(Node *users, char *channel) {
+    int i;
+    int list_length = length(users);
+    Node *p         = users;
+    User *user      = p->payload;
+    for(i = 0; i < list_length; i++) {
+        if(strcmp(user->current_channel, channel) == 0) {
+            return user;
+        };
+        p    = p->next;
+        user = p->payload;
+    };
+    return NULL;
+};
+
+int change_channel(User *user, char *new_channel) {
+    strcpy(user->current_channel, new_channel);
     return 0;
 };
 

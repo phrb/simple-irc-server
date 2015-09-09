@@ -10,7 +10,7 @@ typedef struct _User {
     char *name;
     char *hostname;
     int id;
-    int current_channel;
+    char *current_channel;
     int socket;
     pthread_t thread;
     pthread_mutex_t socket_mutex;
@@ -24,13 +24,14 @@ typedef struct _Node {
 
 int print_node_list(Node *);
 int length(Node *);
-int change_channel(User *, int);
+int change_channel(User *, char *);
 int change_name(User *, char *);
 
-Node *add_user(Node *, char *, char *, int, int, int);
+Node *add_user(Node *, char *, char *, int, char *, int);
 Node *remove_user(Node *, char *);
 Node *empty_user_list();
 User *get_user_by_id(Node *, int);
 User *get_user_by_name(Node *, char *);
+User *get_user_by_channel(Node *, char *);
 
 #endif

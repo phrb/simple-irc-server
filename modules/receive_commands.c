@@ -150,8 +150,34 @@ void receive_who(Node *users, char *query, char *send_line) {
     };
 };
 
-void receive_quit(User *user) {
+Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex) {
     pthread_mutex_lock(&user->socket_mutex);
     close(user->socket);
     pthread_mutex_unlock(&user->socket_mutex);
+
+    pthread_mutex_lock(&list_mutex);
+    users = remove_user(users, user->name);
+    pthread_mutex_unlock(&list_mutex);
+
+    if(length(users) > 0) {
+        return users;
+    }
+    else {
+        return empty_user_list(); 
+    };
+};
+
+void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
+    char *line       = strcpy(line, message);
+    // RM PRIVMSG TOKEN
+    strtok(line, " \t\r\n/");
+    // GET CHANNEL NAME
+    char *channel    = strtok(NULL, " #\t\r\n/");
+    printf(">TARGET CHANNEL: %s<\n", channel);
+    char *first_word = strtok(NULL, " :\t\r\n/");
+    while (first_word != NULL) {
+        printf("%s ", first_word);
+        first_word = strtok(NULL, " \t\r\n/");
+    };
+    printf("\n");
 };

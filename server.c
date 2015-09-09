@@ -67,7 +67,9 @@ int main(int argc, char **argv) {
             exit(5);
         };
         pthread_mutex_lock(&user_list_mutex);
-        user_list = add_user(user_list, "new_user", "new_host", length(user_list), 0, user_socket);
+        user_list = add_user(user_list, "new_user", "new_host", 
+                             length(user_list), "Programacao em Redes", 
+                             user_socket);
         pthread_mutex_unlock(&user_list_mutex);
         new_user = user_list->payload;
 
@@ -79,8 +81,8 @@ void connect_user(User *user) {
     printf("[Usuario %d conectou-se ao servidor, esperando mensagens]\n", user->id);
     char recvline[MAXLINE + 1];
     char *line = malloc(MAXLINE + 1);
+    char *send_message = malloc(MAXLINE + 1);
     char *command;
-    char *send_message;
     ssize_t n;
 
     pthread_mutex_lock(&user->socket_mutex);
@@ -102,6 +104,9 @@ void connect_user(User *user) {
                 strtok(NULL, " \t\r\n/");
                 receive_user(user, strtok(NULL, " \t\r\n/"), send_message);
             }
+            else if(strcmp(command, PRIVMSG) == 0) {
+                receive_privmsg(user, user_list, send_message, recvline);
+            }
             else if(strcmp(command, PING) == 0) {
                 receive_ping(user, send_message);
             }
@@ -118,7 +123,7 @@ void connect_user(User *user) {
                              send_message);
             }
             else if(strcmp(command, QUIT) == 0) {
-                receive_quit(user);
+                user_list = receive_quit(user, user_list, user_list_mutex);
                 return;
             };
             command = strtok(NULL, " \t\r\n/");
