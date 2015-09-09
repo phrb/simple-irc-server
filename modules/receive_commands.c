@@ -5,6 +5,9 @@
 #include "../include/errors.h"
 #include "../include/commands.h"
 
+void send_others(char *name, char *message, Node *users) {
+};
+
 void send_all(char *channel, char *message, Node *users) {
     Node *first  = users;
     Node *p      = users;
@@ -29,7 +32,8 @@ void send_all(char *channel, char *message, Node *users) {
 };
 
 void receive_nick(User *user, Node *users, char *name, char *send_line) {
-    send_line = strset(":localhost ");
+    send_line = strset(":");
+    send_line = stradd(send_line, user->name);
     if(name == NULL) {
         send_line = stradd(send_line, ERR_NONICKNAMEGIVEN);
         send_line = stradd(send_line, "\n");
@@ -42,27 +46,29 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
         send_line = strset(":");
         send_line = stradd(send_line, user->name);
         send_line = stradd(send_line, "!~");
-        send_line = stradd(send_line, user->name);
-        send_line = stradd(send_line, "@");
         send_line = stradd(send_line, user->hostname);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, NICK);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, name);
         send_line = stradd(send_line, "\n");
-        strcpy(user->name, name);
+        printf(">Resposta: %s", send_line);
+        user->name = strset(name);
+        send_all(user->current_channel, send_line, users);
+        return;
     };
-    printf(">Resposta: %s", send_line);
-    send_all(user->current_channel, send_line, users);
 };
 
 void receive_user(User *user, char *hostname, char *send_line) {
-    send_line = strset(":localhost 001 ");
+    send_line = strset(":");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, hostname);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, "localhost :");
     send_line = stradd(send_line, user->name);
     send_line = stradd(send_line, "\n");
-    send_line = stradd(send_line, ":localhost NOTICE * :*** Usuario <");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "> Registrado.\n");
+
     strcpy(user->hostname, hostname);
     printf(">Resposta: %s", send_line);
 
@@ -72,20 +78,22 @@ void receive_user(User *user, char *hostname, char *send_line) {
 };
 
 void receive_mode(User *user, char *umode, char *send_line) {
-    send_line = strset(":");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, MODE);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, umode);
-    send_line = stradd(send_line, "\n");
-    printf(">Resposta: \"%s\"", send_line);
+    if(umode != NULL) {
+        send_line = strset(":");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, MODE);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, umode);
+        send_line = stradd(send_line, "\n");
+        printf(">Resposta: \"%s\"", send_line);
 
-    pthread_mutex_lock(&user->socket_mutex);
-    write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
+        pthread_mutex_lock(&user->socket_mutex);
+        write(user->socket, send_line, strlen(send_line));
+        pthread_mutex_unlock(&user->socket_mutex);
+    };
 };
 
 void receive_ping(User *user, char *send_line) {
