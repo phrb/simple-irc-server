@@ -168,16 +168,62 @@ Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex) {
 };
 
 void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
-    char *line       = strcpy(line, message);
+    char *line, *channel, *word, *text, *send;
+    User *target;
+    Node *first, *p;
+
+    // BEGIN RESPONSE
+    send_line = strset(":localhost ");
+    send_line = stradd(send_line, PRIVMSG);
+
+    line = malloc(sizeof(message) + 1);
+    line = strcpy(line, message);
     // RM PRIVMSG TOKEN
     strtok(line, " \t\r\n/");
     // GET CHANNEL NAME
-    char *channel    = strtok(NULL, " #\t\r\n/");
-    printf(">TARGET CHANNEL: %s<\n", channel);
-    char *first_word = strtok(NULL, " :\t\r\n/");
-    while (first_word != NULL) {
-        printf("%s ", first_word);
-        first_word = strtok(NULL, " \t\r\n/");
+    channel = strtok(NULL, " #\t\r\n/");
+
+    // BUILD TEXT MESSAGE
+    word = strtok(NULL, " :\t\r\n/");
+    text = strset(word);
+    while (word != NULL) {
+        text = stradd(text, word);
+        word = strtok(NULL, " :\t\r\n/");
     };
-    printf("\n");
+    text = stradd(text, "\n");
+
+    first  = users;
+    p      = users;
+    target = (User *) p->payload;
+
+    if(strcmp(target->current_channel, channel) == 0) {
+        send = strset(send_line);
+        send = stradd(send, " ");
+        send = stradd(send, target->name);
+        send = stradd(send, " :");
+        send = stradd(send, text);
+
+        pthread_mutex_lock(&target->socket_mutex);
+        write(target->socket, send, strlen(send));
+        pthread_mutex_unlock(&target->socket_mutex);
+    };
+    p = p->next;
+    target = (User *) p->payload;
+    while(p != first) {
+        printf("tC: %s; mC: %s\n", target->current_channel, channel);
+        if(strcmp(target->current_channel, channel) == 0) {
+            send = strset(send_line);
+            send = stradd(send, " ");
+            send = stradd(send, target->name);
+            send = stradd(send, " :");
+            send = stradd(send, text);
+
+            pthread_mutex_lock(&target->socket_mutex);
+            write(target->socket, send, strlen(send));
+            pthread_mutex_unlock(&target->socket_mutex);
+        };
+        p = p->next;
+        target = (User *) p->payload;
+    };
+    
 };
