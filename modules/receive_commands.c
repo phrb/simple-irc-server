@@ -5,32 +5,6 @@
 #include "../include/errors.h"
 #include "../include/commands.h"
 
-void send_others(char *name, char *message, Node *users) {
-};
-
-void send_all(char *channel, char *message, Node *users) {
-    Node *first  = users;
-    Node *p      = users;
-    User *target = (User *) p->payload;
-
-    if(strcmp(target->current_channel, channel) == 0) {
-        printf("Enviando: %s\n", message);
-        write(target->socket, message, strlen(message));
-        printf("Pronto.\n");
-    };
-    p = p->next;
-    target = (User *) p->payload;
-    while(p != first) {
-        if(strcmp(target->current_channel, channel) == 0) {
-            printf("Enviando: %s\n", message);
-            write(target->socket, message, strlen(message));
-            printf("Pronto.\n");
-        };
-        p = p->next;
-        target = (User *) p->payload;
-    };
-};
-
 void receive_nick(User *user, Node *users, char *name, char *send_line) {
     send_line = strset(":");
     send_line = stradd(send_line, user->name);
@@ -45,36 +19,42 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
     else {
         send_line = strset(":");
         send_line = stradd(send_line, user->name);
-        send_line = stradd(send_line, "!~");
+        send_line = stradd(send_line, "!");
         send_line = stradd(send_line, user->hostname);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, NICK);
-        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, " :");
         send_line = stradd(send_line, name);
         send_line = stradd(send_line, "\n");
         printf(">Resposta: %s", send_line);
         user->name = strset(name);
+        print_node_list(users);
         send_all(user->current_channel, send_line, users);
         return;
     };
+    write(user->socket, send_line, strlen(send_line));
 };
 
 void receive_user(User *user, char *hostname, char *send_line) {
-    send_line = strset(":");
-    send_line = stradd(send_line, user->name);
+    strcpy(user->hostname, hostname);
+    send_line = strset(":localhost NOTICE * :*** Bem-Vindo!\n");
+    send_line = stradd(send_line, ":localhost NOTICE * :*** Procurando hostname...\n");
+    if(strcmp(hostname, user->name) == 0) {
+        send_line = stradd(send_line, ":localhost NOTICE * :*** Não encontrei. Registrando.\n");
+    }
+    else {
+        send_line = stradd(send_line, ":localhost NOTICE * :*** Encontrado. Registrando.\n");
+    };
+    send_line = stradd(send_line, ":localhost 001 ");
     send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, hostname);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, "localhost :");
     send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, " :Bem-Vindo. Seu hostname é ");
+    send_line = stradd(send_line, user->hostname);
     send_line = stradd(send_line, "\n");
 
-    strcpy(user->hostname, hostname);
     printf(">Resposta: %s", send_line);
 
-    pthread_mutex_lock(&user->socket_mutex);
     write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
 };
 
 void receive_mode(User *user, char *umode, char *send_line) {
@@ -90,9 +70,7 @@ void receive_mode(User *user, char *umode, char *send_line) {
         send_line = stradd(send_line, "\n");
         printf(">Resposta: \"%s\"", send_line);
 
-        pthread_mutex_lock(&user->socket_mutex);
         write(user->socket, send_line, strlen(send_line));
-        pthread_mutex_unlock(&user->socket_mutex);
     };
 };
 
@@ -102,9 +80,7 @@ void receive_ping(User *user, char *send_line) {
     send_line = stradd(send_line, "\n");
     printf(">Resposta: %s", send_line);
 
-    pthread_mutex_lock(&user->socket_mutex);
     write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
 };
 
 void receive_whois(User *user, Node *users, char *send_line) {
@@ -122,9 +98,7 @@ void receive_whois(User *user, Node *users, char *send_line) {
     send_line = stradd(send_line, "\n");
     printf(">Resposta: %s", send_line);
 
-    pthread_mutex_lock(&user->socket_mutex);
     write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
 
     // WHOIS SERVER
     send_line = strset(":localhost ");
@@ -144,9 +118,7 @@ void receive_whois(User *user, Node *users, char *send_line) {
     send_line = stradd(send_line, " :End of /WHOIS list\n");
     printf(">Resposta: %s", send_line);
 
-    pthread_mutex_lock(&user->socket_mutex);
     write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
 };
 
 void receive_who(Node *users, char *query, char *send_line) {
@@ -168,9 +140,7 @@ void receive_who(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, "\n");
         printf(">Resposta: %s", send_line);
 
-        pthread_mutex_lock(&user->socket_mutex);
         write(user->socket, send_line, strlen(send_line));
-        pthread_mutex_unlock(&user->socket_mutex);
 
         // END WHO
         send_line = strset(":localhost ");
@@ -180,9 +150,7 @@ void receive_who(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, " :End of /WHO list\n");
         printf(">Resposta: %s", send_line);
 
-        pthread_mutex_lock(&user->socket_mutex);
         write(user->socket, send_line, strlen(send_line));
-        pthread_mutex_unlock(&user->socket_mutex);
     };
 };
 
@@ -207,8 +175,6 @@ Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex, char *se
 
 void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
     char *line, *channel, *word;
-    User *target;
-    Node *first, *p;
 
     line = malloc(strlen(message) + 1);
     line = strcpy(line, message);
@@ -221,9 +187,7 @@ void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
     // BEGIN RESPONSE
     send_line = strset(":");
     send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "!~");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, "!");
     send_line = stradd(send_line, user->hostname);
     send_line = stradd(send_line, " ");
     send_line = stradd(send_line, PRIVMSG);
@@ -243,36 +207,13 @@ void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
     send_line = stradd(send_line, "\n");
 
     // FIND USERS
-    first  = users;
-    p      = users;
-    target = (User *) p->payload;
-
-    if(strcmp(target->name, user->name) != 0 &&
-       strcmp(target->current_channel, channel) == 0) {
-        printf("Enviando: %s\n", send_line);
-        write(target->socket, send_line, strlen(send_line));
-        printf("Pronto.\n");
-    };
-    p = p->next;
-    target = (User *) p->payload;
-    while(p != first) {
-        if(strcmp(target->name, user->name) != 0 &&
-           strcmp(target->current_channel, channel) == 0) {
-            printf("Enviando: %s\n", send_line);
-            write(target->socket, send_line, strlen(send_line));
-            printf("Pronto.\n");
-        };
-        p = p->next;
-        target = (User *) p->payload;
-    };
+    send_others(user->name, channel, send_line, users);
 };
 
 void receive_join(User *user, Node *users, char *channel, char *send_line) {
     send_line = strset(":");
     send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "!~");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, "!");
     send_line = stradd(send_line, user->hostname);
     send_line = stradd(send_line, " ");
     send_line = stradd(send_line, JOIN);
@@ -288,9 +229,7 @@ void receive_join(User *user, Node *users, char *channel, char *send_line) {
 void receive_part(User *user, Node *users, char *send_line) {
     send_line = strset(":");
     send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "!~");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, "!");
     send_line = stradd(send_line, user->hostname);
     send_line = stradd(send_line, " ");
     send_line = stradd(send_line, PART);

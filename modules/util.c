@@ -12,3 +12,52 @@ char *strset(char *str) {
     strcpy(result, str);
     return result;    
 };
+
+void send_others(char *name, char *channel, char *message, Node *users) {
+    Node *first  = users;
+    Node *p      = users;
+    User *target = (User *) p->payload;
+
+    if(strcmp(target->name, name) != 0 &&
+       strcmp(target->current_channel, channel) == 0) {
+        printf("Enviando: %s\n", message);
+        write(target->socket, message, strlen(message));
+        printf("Pronto.\n");
+    };
+    p = p->next;
+    target = (User *) p->payload;
+    while(p != first) {
+        if(strcmp(target->name, name) != 0 &&
+           strcmp(target->current_channel, channel) == 0) {
+            printf("Enviando: %s\n", message);
+            write(target->socket, message, strlen(message));
+            printf("Pronto.\n");
+        };
+        p = p->next;
+        target = (User *) p->payload;
+    };
+};
+
+void send_all(char *channel, char *message, Node *users) {
+    Node *first  = users;
+    Node *p      = users;
+    User *target = (User *) p->payload;
+
+    if(strcmp(target->current_channel, channel) == 0) {
+        printf("Enviando: %s\n", message);
+        write(target->socket, message, strlen(message));
+        printf("Pronto.\n");
+    };
+    p = p->next;
+    target = (User *) p->payload;
+    while(p != first) {
+        if(strcmp(target->current_channel, channel) == 0) {
+            printf("Enviando: %s\n", message);
+            write(target->socket, message, strlen(message));
+            printf("Pronto.\n");
+        };
+        p = p->next;
+        target = (User *) p->payload;
+    };
+};
+
