@@ -3,6 +3,7 @@
 char *NICK       = "NICK";
 char *USER       = "USER";
 char *JOIN       = "JOIN";
+char *PART       = "PART";
 char *MODE       = "MODE";
 char *PING       = "PING";
 char *PONG       = "PONG";

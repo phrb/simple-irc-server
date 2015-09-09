@@ -105,7 +105,10 @@ void connect_user(User *user) {
                 receive_user(user, strtok(NULL, " \t\r\n/"), send_message);
             }
             else if(strcmp(command, JOIN) == 0) {
-                receive_join(user, strtok(NULL, " #\t\r\n/"), send_message);
+                receive_join(user, user_list, strtok(NULL, " #\t\r\n/"), send_message);
+            }
+            else if(strcmp(command, PART) == 0) {
+                receive_part(user, user_list, send_message);
             }
             else if(strcmp(command, PRIVMSG) == 0) {
                 receive_privmsg(user, user_list, send_message, recvline);
@@ -126,7 +129,7 @@ void connect_user(User *user) {
                              send_message);
             }
             else if(strcmp(command, QUIT) == 0) {
-                user_list = receive_quit(user, user_list, user_list_mutex);
+                user_list = receive_quit(user, user_list, user_list_mutex, send_message);
                 return;
             };
             command = strtok(NULL, " \t\r\n/");

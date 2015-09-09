@@ -5,6 +5,29 @@
 #include "../include/errors.h"
 #include "../include/commands.h"
 
+void send_all(char *channel, char *message, Node *users) {
+    Node *first  = users;
+    Node *p      = users;
+    User *target = (User *) p->payload;
+
+    if(strcmp(target->current_channel, channel) == 0) {
+        printf("Enviando: %s\n", message);
+        write(target->socket, message, strlen(message));
+        printf("Pronto.\n");
+    };
+    p = p->next;
+    target = (User *) p->payload;
+    while(p != first) {
+        if(strcmp(target->current_channel, channel) == 0) {
+            printf("Enviando: %s\n", message);
+            write(target->socket, message, strlen(message));
+            printf("Pronto.\n");
+        };
+        p = p->next;
+        target = (User *) p->payload;
+    };
+};
+
 void receive_nick(User *user, Node *users, char *name, char *send_line) {
     send_line = strset(":localhost ");
     if(name == NULL) {
@@ -18,6 +41,10 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
     else {
         send_line = strset(":");
         send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, "!~");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, "@");
+        send_line = stradd(send_line, user->hostname);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, NICK);
         send_line = stradd(send_line, " ");
@@ -26,10 +53,7 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
         strcpy(user->name, name);
     };
     printf(">Resposta: %s", send_line);
-
-    pthread_mutex_lock(&user->socket_mutex);
-    write(user->socket, send_line, strlen(send_line));
-    pthread_mutex_unlock(&user->socket_mutex);
+    send_all(user->current_channel, send_line, users);
 };
 
 void receive_user(User *user, char *hostname, char *send_line) {
@@ -154,7 +178,9 @@ void receive_who(Node *users, char *query, char *send_line) {
     };
 };
 
-Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex) {
+Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex, char *send_line) {
+    receive_part(user, users, send_line);
+
     pthread_mutex_lock(&user->socket_mutex);
     close(user->socket);
     pthread_mutex_unlock(&user->socket_mutex);
@@ -233,7 +259,7 @@ void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
     };
 };
 
-void receive_join(User *user, char *channel, char *send_line) {
+void receive_join(User *user, Node *users, char *channel, char *send_line) {
     send_line = strset(":");
     send_line = stradd(send_line, user->name);
     send_line = stradd(send_line, "!~");
@@ -247,6 +273,24 @@ void receive_join(User *user, char *channel, char *send_line) {
     send_line = stradd(send_line, channel);
     send_line = stradd(send_line, "\n");
 
-    write(user->socket, send_line, strlen(send_line));
     user->current_channel = strset(channel);
+    send_all(channel, send_line, users);
+};
+
+void receive_part(User *user, Node *users, char *send_line) {
+    send_line = strset(":");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "!~");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, user->hostname);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, PART);
+
+    send_line = stradd(send_line, " #");
+    send_line = stradd(send_line, user->current_channel);
+    send_line = stradd(send_line, "\n");
+
+    send_all(user->current_channel, send_line, users);
+    user->current_channel = strset("Default Channel");
 };
