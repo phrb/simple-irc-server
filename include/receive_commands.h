@@ -16,8 +16,8 @@
 
 void receive_ping(User *, char *);
 void receive_who(Node *, char *, char *);
-void receive_user(User *, char *, char *);
 void receive_join(User *, char *, char *);
+void receive_user(User *, char *, char *);
 void receive_mode(User *, char *, char *);
 void receive_pong(User *, char *, char *);
 void receive_whois(User *, Node *, char *);

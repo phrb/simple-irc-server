@@ -16,10 +16,14 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
         send_line = stradd(send_line, "\n");
     }
     else {
-        strcpy(user->name, name);
-        send_line = strset("001 ");
+        send_line = strset(":");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, NICK);
+        send_line = stradd(send_line, " ");
         send_line = stradd(send_line, name);
         send_line = stradd(send_line, "\n");
+        strcpy(user->name, name);
     };
     printf(">Resposta: %s", send_line);
 
@@ -163,67 +167,86 @@ Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex) {
         return users;
     }
     else {
-        return empty_user_list(); 
+        return empty_user_list();
     };
 };
 
 void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
-    char *line, *channel, *word, *text, *send;
+    char *line, *channel, *word;
     User *target;
     Node *first, *p;
 
-    // BEGIN RESPONSE
-    send_line = strset(":localhost ");
-    send_line = stradd(send_line, PRIVMSG);
-
-    line = malloc(sizeof(message) + 1);
+    line = malloc(strlen(message) + 1);
     line = strcpy(line, message);
+
     // RM PRIVMSG TOKEN
     strtok(line, " \t\r\n/");
     // GET CHANNEL NAME
     channel = strtok(NULL, " #\t\r\n/");
 
+    // BEGIN RESPONSE
+    send_line = strset(":");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "!~");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, user->hostname);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, PRIVMSG);
+
+    send_line = stradd(send_line, " #");
+    send_line = stradd(send_line, channel);
+    send_line = stradd(send_line, " :");
+
     // BUILD TEXT MESSAGE
     word = strtok(NULL, " :\t\r\n/");
-    text = strset(word);
     while (word != NULL) {
-        text = stradd(text, word);
-        word = strtok(NULL, " :\t\r\n/");
+        printf("%s\n", word);
+        send_line = stradd(send_line, word);
+        send_line = stradd(send_line, " ");
+        word = strtok(NULL, " \t\r\n/");
     };
-    text = stradd(text, "\n");
+    send_line = stradd(send_line, "\n");
 
+    // FIND USERS
     first  = users;
     p      = users;
     target = (User *) p->payload;
 
-    if(strcmp(target->current_channel, channel) == 0) {
-        send = strset(send_line);
-        send = stradd(send, " ");
-        send = stradd(send, target->name);
-        send = stradd(send, " :");
-        send = stradd(send, text);
-
-        pthread_mutex_lock(&target->socket_mutex);
-        write(target->socket, send, strlen(send));
-        pthread_mutex_unlock(&target->socket_mutex);
+    if(strcmp(target->name, user->name) != 0 &&
+       strcmp(target->current_channel, channel) == 0) {
+        printf("Enviando: %s\n", send_line);
+        write(target->socket, send_line, strlen(send_line));
+        printf("Pronto.\n");
     };
     p = p->next;
     target = (User *) p->payload;
     while(p != first) {
-        printf("tC: %s; mC: %s\n", target->current_channel, channel);
-        if(strcmp(target->current_channel, channel) == 0) {
-            send = strset(send_line);
-            send = stradd(send, " ");
-            send = stradd(send, target->name);
-            send = stradd(send, " :");
-            send = stradd(send, text);
-
-            pthread_mutex_lock(&target->socket_mutex);
-            write(target->socket, send, strlen(send));
-            pthread_mutex_unlock(&target->socket_mutex);
+        if(strcmp(target->name, user->name) != 0 &&
+           strcmp(target->current_channel, channel) == 0) {
+            printf("Enviando: %s\n", send_line);
+            write(target->socket, send_line, strlen(send_line));
+            printf("Pronto.\n");
         };
         p = p->next;
         target = (User *) p->payload;
     };
-    
+};
+
+void receive_join(User *user, char *channel, char *send_line) {
+    send_line = strset(":");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "!~");
+    send_line = stradd(send_line, user->name);
+    send_line = stradd(send_line, "@");
+    send_line = stradd(send_line, user->hostname);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, JOIN);
+
+    send_line = stradd(send_line, " #");
+    send_line = stradd(send_line, channel);
+    send_line = stradd(send_line, "\n");
+
+    write(user->socket, send_line, strlen(send_line));
+    user->current_channel = strset(channel);
 };

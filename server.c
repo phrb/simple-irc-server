@@ -67,8 +67,8 @@ int main(int argc, char **argv) {
             exit(5);
         };
         pthread_mutex_lock(&user_list_mutex);
-        user_list = add_user(user_list, "new_user", "new_host", 
-                             length(user_list), "Programacao em Redes", 
+        user_list = add_user(user_list, "new_user", "new_host",
+                             length(user_list), "Programacao em Redes",
                              user_socket);
         pthread_mutex_unlock(&user_list_mutex);
         new_user = user_list->payload;
@@ -103,6 +103,9 @@ void connect_user(User *user) {
             else if(strcmp(command, USER) == 0) {
                 strtok(NULL, " \t\r\n/");
                 receive_user(user, strtok(NULL, " \t\r\n/"), send_message);
+            }
+            else if(strcmp(command, JOIN) == 0) {
+                receive_join(user, strtok(NULL, " #\t\r\n/"), send_message);
             }
             else if(strcmp(command, PRIVMSG) == 0) {
                 receive_privmsg(user, user_list, send_message, recvline);
