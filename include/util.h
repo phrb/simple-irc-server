@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <ctype.h>
 #include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
@@ -19,6 +20,7 @@
 
 char *strset(char *);
 char *stradd(char *, char *);
+char *uppercase(char[]);
 void send_all(char *, char *, Node *);
 void send_others(char *, char *, char *, Node *);
 

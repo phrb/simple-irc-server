@@ -12,4 +12,3 @@ char *WHO        = "WHO";
 char *WHOIS      = "WHOIS";
 char *QUIT       = "QUIT";
 char *PRIVMSG    = "PRIVMSG";
-char *DISCONNECT = "DISCONNECT";

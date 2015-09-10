@@ -16,6 +16,7 @@ void connect_user(User *user) {
         recvline[n] = 0;
         line = strcpy(line, recvline);
         command = strtok(line, " \t\r\n/");
+        command = uppercase(command);
         while(command != NULL) {
             printf("[Usuario %s enviou o comando \"%s\"]\n", user->name, command);
             if(strcmp(command, NICK) == 0) {
