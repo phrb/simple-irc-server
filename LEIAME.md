@@ -37,11 +37,11 @@ de usuários.
 
 - `connect_user.{h, c}`: 
 
-        * Declara a lista de usuários e seu mutex lock;
+    * Declara a lista de usuários e seu mutex lock;
 
-        * `void connect_user(User *);`:
+    * `void connect_user(User *);`:
 
-            - Responsável pela coordenação da conexão de cada usuário.
+        Responsável pela coordenação da conexão de cada usuário.
 
 - `errors.{h, c}`: Strings com os códigos de erro para IRC.
 
