@@ -19,4 +19,8 @@ extern char *ENDOFWHOIS;
 extern char *ENDOFWHO;
 extern char *ENDOFNAMES;
 
+extern char **CHANNELS;
+extern char *LIST_END;
+extern char *LIST_HEADER
+
 #endif

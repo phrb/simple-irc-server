@@ -17,3 +17,7 @@ char *DEFAULT_PONG    = ":progredes.irc.org PONG progredes.irc.org :";
 char *ENDOFWHOIS      = " :End of /WHOIS list\n";
 char *ENDOFWHO        = " :End of /WHO list\n";
 char *ENDOFNAMES      = " :End of /NAMES list\n";
+
+char **CHANNELS       = {" Chan1 #true :1\n", " Chan2 #true :2\n"};
+char *LIST_END        = " :End of /LIST\n";
+char *LIST_HEADER     = " Channel :Users Name\n";

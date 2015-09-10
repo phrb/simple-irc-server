@@ -11,6 +11,7 @@ int print_node_list(Node *list) {
     printf("User Node List.\n");
     User *user = (User *) p->payload;
     printf("\tName   : %s\n", user->name);
+    printf("\tHost   : %s\n", user->hostname);
     printf("\tID     : %d\n", user->id);
     printf("\tChannel: %s\n", user->current_channel);
     printf("\tSocket : %d\n", user->socket);
@@ -18,6 +19,7 @@ int print_node_list(Node *list) {
     while(p != first) {
         user = (User *) p->payload;
         printf("\tName   : %s\n", user->name);
+        printf("\tHost   : %s\n", user->hostname);
         printf("\tID     : %d\n", user->id);
         printf("\tChannel: %s\n", user->current_channel);
         printf("\tSocket : %d\n", user->socket);
@@ -82,7 +84,8 @@ int length(Node *list) {
     };
 };
 
-Node *add_user(Node *list, char *name, char *hostname, int id, char *channel, int socket) {
+Node *add_user(Node *list, char *name, char *hostname, 
+               int id, char *channel, int socket) {
     if(list == NULL) {
         return list;
     }

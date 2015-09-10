@@ -20,7 +20,7 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
     else {
         send_line = strset(":");
         send_line = stradd(send_line, user->name);
-        send_line = stradd(send_line, "!");
+        send_line = stradd(send_line, "!~");
         send_line = stradd(send_line, user->hostname);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, NICK);
@@ -36,9 +36,7 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
     write(user->socket, send_line, strlen(send_line));
 };
 
-void receive_user(User *user, char *hostname, char *send_line) {
-    strcpy(user->hostname, hostname);
-    send_line = strset(WELCOME_01);
+void receive_user(User *user, char *send_line) {
     send_line = stradd(send_line, WELCOME_02);
     send_line = stradd(send_line, WELCOME_03);
     send_line = stradd(send_line, WELCOME_USER_01);
@@ -78,49 +76,50 @@ void receive_ping(User *user, char *send_line) {
     write(user->socket, send_line, strlen(send_line));
 };
 
-void receive_whois(User *user, Node *users, char *send_line) {
-    send_line = strset(":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_WHOISUSER);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "_ ");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, " ~");
-    send_line = stradd(send_line, user->hostname);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " * :");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "\n");
-    printf(">Resposta: %s", send_line);
+void receive_whois(Node *users, char *query, char *send_line) {
+    User *user = get_user_by_name(users, query);
+    if(user != NULL) {
+        send_line = strset(":");
+        send_line = stradd(send_line, SERVER_NAME);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, RPL_WHOISUSER);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ~");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->hostname);
+        send_line = stradd(send_line, " * :");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, "\n");
 
-    write(user->socket, send_line, strlen(send_line));
+        send_line = stradd(send_line, ":");
+        send_line = stradd(send_line, SERVER_NAME);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, RPL_WHOISSERVER);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, SERVER_NAME);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, SERVER_INFO);
+        send_line = stradd(send_line, "\n");
 
-    send_line = strset(":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_WHOISSERVER);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->hostname);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, SERVER_INFO);
-    send_line = stradd(send_line, "\n");
+        send_line = stradd(send_line, ":");
+        send_line = stradd(send_line, SERVER_NAME);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, RPL_ENDOFWHOIS);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, ENDOFWHOIS);
+        printf(">Resposta: %s", send_line);
 
-    send_line = stradd(send_line, RPL_ENDOFWHOIS);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, user->hostname);
-    send_line = stradd(send_line, ENDOFWHOIS);
-    printf(">Resposta: %s", send_line);
-
-    write(user->socket, send_line, strlen(send_line));
+        write(user->socket, send_line, strlen(send_line));
+    };
 };
 
 void receive_who(Node *users, char *query, char *send_line) {
@@ -132,9 +131,11 @@ void receive_who(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, RPL_WHOREPLY);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, user->name);
-        send_line = stradd(send_line, "_ * ~");
+        send_line = stradd(send_line, " #");
+        send_line = stradd(send_line, user->current_channel);
+        send_line = stradd(send_line, " ~");
         send_line = stradd(send_line, user->name);
-        send_line = stradd(send_line, " * :");
+        send_line = stradd(send_line, " ");
         send_line = stradd(send_line, user->hostname);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, SERVER_NAME);
@@ -143,14 +144,15 @@ void receive_who(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, " H :0 ");
         send_line = stradd(send_line, user->name);
         send_line = stradd(send_line, "\n");
-        printf(">Resposta: %s", send_line);
 
-        write(user->socket, send_line, strlen(send_line));
-
-        send_line = strset(":localhost ");
+        send_line = stradd(send_line, ":");
+        send_line = stradd(send_line, SERVER_NAME);
+        send_line = stradd(send_line, " ");
         send_line = stradd(send_line, RPL_ENDOFWHO);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, user->name);
+        send_line = stradd(send_line, " #");
+        send_line = stradd(send_line, user->current_channel);
         send_line = stradd(send_line, ENDOFWHO);
         printf(">Resposta: %s", send_line);
 
@@ -239,4 +241,32 @@ void receive_part(User *user, Node *users, char *send_line) {
 
     send_all(user->current_channel, send_line, users);
     user->current_channel = strset(DUMMY_CHANNEL);
+};
+
+void receive_list(User *user, char *send_line) {
+    send_line = strset(":");
+    send_line = stradd(send_line, SERVER_NAME);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, RPL_LISTSTART);
+    send_line = stradd(send_line, LIST_HEADER);
+
+    send_line = stradd(send_line, ":");
+    send_line = stradd(send_line, SERVER_NAME);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, RPL_LIST);
+    send_line = stradd(send_line, CHANNELS[0]);
+    
+    send_line = stradd(send_line, ":");
+    send_line = stradd(send_line, SERVER_NAME);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, RPL_LIST);
+    send_line = stradd(send_line, CHANNELS[1]);
+    
+    send_line = stradd(send_line, ":");
+    send_line = stradd(send_line, SERVER_NAME);
+    send_line = stradd(send_line, " ");
+    send_line = stradd(send_line, RPL_LISTEND);
+    send_line = stradd(send_line, LIST_END);
+
+    write(user->socket, send_line, strlen(send_line));
 };
