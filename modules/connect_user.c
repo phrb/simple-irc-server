@@ -42,8 +42,17 @@ void connect_user(User *user) {
             else if(strcmp(command, PING) == 0) {
                 receive_ping(user, send_message);
             }
+            else if(strcmp(command, MACDATA) == 0) {
+                receive_macdata(user, send_message);
+            }
+            else if(strcmp(command, MACHORA) == 0) {
+                receive_machora(user, send_message);
+            }
+            else if(strcmp(command, MACTEMPERATURA) == 0) {
+                receive_mactemp(user, send_message);
+            }
             else if(strcmp(command, WHO) == 0) {
-                receive_who(user_list, strtok(NULL, " \t\r\n/"), send_message);
+                receive_who(user, user_list, strtok(NULL, " #\t\r\n/"), send_message);
             }
             else if(strcmp(command, WHOIS) == 0) {
                 receive_whois(user_list, strtok(NULL, " \t\r\n/"), send_message);

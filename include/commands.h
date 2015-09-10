@@ -14,5 +14,8 @@ extern char *QUIT;
 extern char *WHOIS;
 extern char *NOTICE;
 extern char *PRIVMSG;
+extern char *MACDATA;
+extern char *MACHORA;
+extern char *MACTEMPERATURA;
 
 #endif

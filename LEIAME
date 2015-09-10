@@ -30,8 +30,12 @@ esperará conexões.
 
 Os clientes `irssi` e `xchat` foram utilizados para
 a compreensão das mensagens trocadas entre cliente e
-servidor IRC, e este servidor é compatível com esses
-dois clientes.
+servidor IRC. Este servidor é compatível com os dois 
+clientes, mas os comandos especiais não foram testados 
+no `irssi`.
+
+A implementação do DCC não foi capaz de estabelecer
+a troca de arquivos.
 
 Para se conectar ao servidor:
 
@@ -48,10 +52,10 @@ O servidor implementa os seguintes comandos IRC:
 * WHOIS:          Lista mais informações sobre um usuário;
 * PRIVMSG:        Envia mensagens a um canal ou usuário;
 * QUIT:           Desconecta o usuário do servidor.
-* DCC:
-* MACDATA:
-* MACHORA:
-* MACTEMPERATURA:
+* DCC:            Repassa o pedido de envio de arquivos.
+* MACDATA:        Envia a data (dd/mm/aaaa) no servidor.
+* MACHORA:        Envia a hora (hh:mm:ss--tz) no servidor.
+* MACTEMPERATURA: (não implementado)
 
 Além disso, o servidor implementa parcialmente alguns
 comandos para interação com clientes, que garantem
