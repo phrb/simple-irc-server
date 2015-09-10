@@ -1,16 +1,79 @@
-# Pedro Henrique Rocha Bruel, 7143336
-
 ## EP1 - MAC0448/5910 Programação para Redes de Computadores
+### Pedro Henrique Rocha Bruel, 7143336
 
-## Um Servidor IRC
+Esta é a documentação para o EP1 da disciplina MAC0448/5910.
+Este projeto implementa um servidor de IRC básico, que
+responde a um subconjunto dos comandos do protocolo de
+Internet Relay Chat.
 
-## Lista de arquivos
+Este documento está organizado da seguinte forma:
+
+1. Descrição do Servidor
+2. Lista de Arquivos
+
+## 1. Descrição do Servidor
+
+Para compilar o projeto, use o comando:
+
+    $ make
+
+Para produzir o binário com os testes, use:
+
+    $ make test
+
+Para iniciar o servidor:
+
+    $ ./server <porta>
+
+Onde `<porta>` é o número da porta na qual o servidor
+esperará conexões.
+
+Os clientes `irssi` e `xchat` foram utilizados para
+a compreensão das mensagens trocadas entre cliente e
+servidor IRC, e este servidor é compatível com esses
+dois clientes.
+
+Para se conectar ao servidor:
+
+    /connect localhost <porta>
+
+O servidor implementa os seguintes comandos IRC:
+
+* WHO:            Lista informações de um usuário;
+* NICK:           Muda o nome de um usuário;
+* USER:           Registra um usuário;
+* LIST:           Lista os canais do servidor;
+* JOIN:           Entra num canal;
+* PART:           Sai de um canal;
+* WHOIS:          Lista mais informações sobre um usuário;
+* PRIVMSG:        Envia mensagens a um canal ou usuário;
+* QUIT:           Desconecta o usuário do servidor.
+* DCC:
+* MACDATA:
+* MACHORA:
+* MACTEMPERATURA:
+
+Além disso, o servidor implementa parcialmente alguns
+comandos para interação com clientes, que garantem
+a manutenção da conexão:
+
+* PING:   Responde com um PONG;
+* NOTICE: Envia notificações a um cliente.
+
+Finalmente, o servidor possui dois canais fixos:
+
+* WhiteHat:   "No script kiddies allowed.".
+* 1337h4x0rz: ":(){ :|: & };:".
+
+## 2. Lista de Arquivos
 
 Os diretórios `./include` e `./modules` contêm, respectivamente,
 os cabeçalhos e o código para os componentes do programa.
 
 O diretório `./test` contém alguns testes para a lista ligada
 de usuários.
+
+Esta seção detalha os arquivos e diretórios do projeto.
 
 ### Raiz do projeto
 
