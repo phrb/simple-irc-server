@@ -17,10 +17,6 @@ Para compilar o projeto, use o comando:
 
     $ make
 
-Para produzir o binário com os testes, use:
-
-    $ make test
-
 Para iniciar o servidor:
 
     $ ./server <porta>
@@ -74,9 +70,6 @@ Finalmente, o servidor possui dois canais fixos:
 Os diretórios `./include` e `./modules` contêm, respectivamente,
 os cabeçalhos e o código para os componentes do programa.
 
-O diretório `./test` contém alguns testes para a lista ligada
-de usuários.
-
 Esta seção detalha os arquivos e diretórios do projeto.
 
 ### Raiz do projeto
@@ -85,15 +78,12 @@ Esta seção detalha os arquivos e diretórios do projeto.
 
 - `./modules`: Implementações;
 
-- `./test`: Testes;
-
 - `LICENSE`:  GNU GPLv2;
 
 - `Makefile`:
 
     * all:    Compila o projeto;
     * server: Compila `server.c`;
-    * test:   Compila os testes;
     * clean:  Remove os binários.
 
 - `server.c`: Ponto de entrada para o servidor.
