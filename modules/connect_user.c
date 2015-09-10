@@ -27,7 +27,7 @@ void connect_user(User *user) {
                 receive_user(user, send_message);
             }
             else if(strcmp(command, LIST) == 0) {
-                receive_list(user, send_message);
+                receive_list(user, user_list, send_message);
             }
             else if(strcmp(command, JOIN) == 0) {
                 receive_join(user, user_list, strtok(NULL, " #\t\r\n/"), send_message);

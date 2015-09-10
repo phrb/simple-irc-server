@@ -84,7 +84,7 @@ int length(Node *list) {
     };
 };
 
-Node *add_user(Node *list, char *name, char *hostname, 
+Node *add_user(Node *list, char *name, char *hostname,
                int id, char *channel, int socket) {
     if(list == NULL) {
         return list;
@@ -173,19 +173,21 @@ User *get_user_by_name(Node *users, char *name) {
     return NULL;
 };
 
-User *get_user_by_channel(Node *users, char *channel) {
-    int i;
-    int list_length = length(users);
-    Node *p         = users;
-    User *user      = p->payload;
+char *get_users_in_channel(Node *users, char *channel, char *str_users_in_channel) {
+    int i, users_in_channel;
+    int list_length  = length(users);
+    Node *p          = users;
+    User *user       = p->payload;
+    users_in_channel = 0;
     for(i = 0; i < list_length; i++) {
         if(strcmp(user->current_channel, channel) == 0) {
-            return user;
+            users_in_channel += 1;
         };
         p    = p->next;
         user = p->payload;
     };
-    return NULL;
+    sprintf(str_users_in_channel, "%d", users_in_channel);
+    return str_users_in_channel;
 };
 
 int change_channel(User *user, char *new_channel) {

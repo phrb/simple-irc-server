@@ -27,7 +27,6 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
         send_line = stradd(send_line, " :");
         send_line = stradd(send_line, name);
         send_line = stradd(send_line, "\n");
-        printf(">Resposta: %s", send_line);
         user->name = strset(name);
         print_node_list(users);
         send_all(user->current_channel, send_line, users);
@@ -45,8 +44,6 @@ void receive_user(User *user, char *send_line) {
     send_line = stradd(send_line, user->hostname);
     send_line = stradd(send_line, "\n");
 
-    printf(">Resposta: %s", send_line);
-
     write(user->socket, send_line, strlen(send_line));
 };
 
@@ -61,7 +58,6 @@ void receive_mode(User *user, char *umode, char *send_line) {
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, umode);
         send_line = stradd(send_line, "\n");
-        printf(">Resposta: \"%s\"", send_line);
 
         write(user->socket, send_line, strlen(send_line));
     };
@@ -71,7 +67,6 @@ void receive_ping(User *user, char *send_line) {
     send_line = strset(DEFAULT_PONG);
     send_line = stradd(send_line, strtok(NULL, " \t\r\n/"));
     send_line = stradd(send_line, "\n");
-    printf(">Resposta: %s", send_line);
 
     write(user->socket, send_line, strlen(send_line));
 };
@@ -116,7 +111,6 @@ void receive_whois(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, user->name);
         send_line = stradd(send_line, ENDOFWHOIS);
-        printf(">Resposta: %s", send_line);
 
         write(user->socket, send_line, strlen(send_line));
     };
@@ -154,7 +148,6 @@ void receive_who(Node *users, char *query, char *send_line) {
         send_line = stradd(send_line, " #");
         send_line = stradd(send_line, user->current_channel);
         send_line = stradd(send_line, ENDOFWHO);
-        printf(">Resposta: %s", send_line);
 
         write(user->socket, send_line, strlen(send_line));
     };
@@ -182,31 +175,31 @@ Node *receive_quit(User *user, Node *users, pthread_mutex_t list_mutex, char *se
 void receive_privmsg(User *user, Node *users, char *send_line, char *message) {
     char *line, *channel, *word;
 
-    line = malloc(strlen(message) + 1);
-    line = strcpy(line, message);
+    line           = malloc(strlen(message) + 1);
+    line           = strcpy(line, message);
 
     strtok(line, " \t\r\n/");
-    channel = strtok(NULL, " #\t\r\n/");
+    channel        = strtok(NULL, " #\t\r\n/");
 
-    send_line = strset(":");
-    send_line = stradd(send_line, user->name);
-    send_line = stradd(send_line, "!");
-    send_line = stradd(send_line, user->hostname);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, PRIVMSG);
+    send_line      = strset(":");
+    send_line      = stradd(send_line, user->name);
+    send_line      = stradd(send_line, "!");
+    send_line      = stradd(send_line, user->hostname);
+    send_line      = stradd(send_line, " ");
+    send_line      = stradd(send_line, PRIVMSG);
 
-    send_line = stradd(send_line, " #");
-    send_line = stradd(send_line, channel);
-    send_line = stradd(send_line, " :");
+    send_line      = stradd(send_line, " #");
+    send_line      = stradd(send_line, channel);
+    send_line      = stradd(send_line, " :");
 
-    word = strtok(NULL, " :\t\r\n/");
-    while (word != NULL) {
+    word           = strtok(NULL, " :\t\r\n/");
+    while (word   != NULL) {
         printf("%s\n", word);
-        send_line = stradd(send_line, word);
-        send_line = stradd(send_line, " ");
-        word = strtok(NULL, " \t\r\n/");
+        send_line  = stradd(send_line, word);
+        send_line  = stradd(send_line, " ");
+        word       = strtok(NULL, " \t\r\n/");
     };
-    send_line = stradd(send_line, "\n");
+    send_line      = stradd(send_line, "\n");
 
     send_others(user->name, channel, send_line, users);
 };
@@ -243,30 +236,55 @@ void receive_part(User *user, Node *users, char *send_line) {
     user->current_channel = strset(DUMMY_CHANNEL);
 };
 
-void receive_list(User *user, char *send_line) {
-    send_line = strset(":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_LISTSTART);
-    send_line = stradd(send_line, LIST_HEADER);
+void receive_list(User *user, Node *users, char *send_line) {
+    char *chan1 = malloc(16);
+    char *chan2 = malloc(16);
 
-    send_line = stradd(send_line, ":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_LIST);
-    send_line = stradd(send_line, CHANNELS[0]);
-    
-    send_line = stradd(send_line, ":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_LIST);
-    send_line = stradd(send_line, CHANNELS[1]);
-    
-    send_line = stradd(send_line, ":");
-    send_line = stradd(send_line, SERVER_NAME);
-    send_line = stradd(send_line, " ");
-    send_line = stradd(send_line, RPL_LISTEND);
-    send_line = stradd(send_line, LIST_END);
+    chan1       = get_users_in_channel(users, CHANNELS[0], chan1);
+    chan2       = get_users_in_channel(users, CHANNELS[2], chan2);
+
+    send_line   = strset(":");
+    send_line   = stradd(send_line, SERVER_NAME);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, RPL_LISTSTART);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, user->name);
+    send_line   = stradd(send_line, LIST_HEADER);
+
+    send_line   = stradd(send_line, ":");
+    send_line   = stradd(send_line, SERVER_NAME);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, RPL_LIST);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, user->name);
+    send_line   = stradd(send_line, " #");
+    send_line   = stradd(send_line, CHANNELS[0]);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, chan1);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, CHANNELS[1]);
+
+    send_line   = stradd(send_line, ":");
+    send_line   = stradd(send_line, SERVER_NAME);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, RPL_LIST);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, user->name);
+    send_line   = stradd(send_line, " #");
+    send_line   = stradd(send_line, CHANNELS[2]);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, chan2);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, CHANNELS[3]);
+
+    send_line   = stradd(send_line, ":");
+    send_line   = stradd(send_line, SERVER_NAME);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, RPL_LISTEND);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, user->name);
+    send_line   = stradd(send_line, " ");
+    send_line   = stradd(send_line, LIST_END);
 
     write(user->socket, send_line, strlen(send_line));
 };

@@ -7,7 +7,7 @@ char *WELCOME_USER_01 = ":progredes.irc.org 001 ";
 char *WELCOME_USER_02 = " :Bem-Vindo. Seu hostname é  ";
 
 char *DUMMY_USER      = "unregistered_user";
-char *DUMMY_CHANNEL   = "lobby";
+char *DUMMY_CHANNEL   = "*";
 char *DUMMY_HOST      = "unknown_host";
 
 char *SERVER_NAME     = "progredes.irc.org";
@@ -18,6 +18,10 @@ char *ENDOFWHOIS      = " :End of /WHOIS list\n";
 char *ENDOFWHO        = " :End of /WHO list\n";
 char *ENDOFNAMES      = " :End of /NAMES list\n";
 
-char **CHANNELS       = {" Chan1 #true :1\n", " Chan2 #true :2\n"};
+char *CHANNELS[]      = {"WhiteHat",
+                         " :No script kiddies allowed.\n",
+                         "1337h4x0rz",
+                         " ::(){ :|: & };:\n"};
+
 char *LIST_END        = " :End of /LIST\n";
 char *LIST_HEADER     = " Channel :Users Name\n";
