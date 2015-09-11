@@ -1,6 +1,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+extern char *DCC;
 extern char *WHO;
 extern char *NICK;
 extern char *USER;

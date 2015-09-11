@@ -23,4 +23,10 @@ extern char *CHANNELS[];
 extern char *LIST_END;
 extern char *LIST_HEADER;
 
+extern char *DCC_START;
+extern char *DCC_END;
+
+extern char *NICKNAMEINUSE;
+extern char *NONICKNAMEGIVEN;
+
 #endif

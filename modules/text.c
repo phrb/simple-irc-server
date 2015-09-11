@@ -25,3 +25,9 @@ char *CHANNELS[]      = {"WhiteHat",
 
 char *LIST_END        = " :End of /LIST\n";
 char *LIST_HEADER     = " Channel :Users Name\n";
+
+char *DCC_START       = "\001DCC ";
+char *DCC_END         = "\001\n";
+
+char *NICKNAMEINUSE   = " :Nickname is already in use\n";
+char *NONICKNAMEGIVEN = " :No nickname given\n";

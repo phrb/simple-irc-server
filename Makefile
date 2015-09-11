@@ -8,9 +8,6 @@ all: server
 server: $(FILES)
 	gcc -o $(OUTPUT) $(CFLAGS) $(INPUT)
 
-test: test/tests.c modules/user.c include/user.h
-	cd test && gcc -Wall -o test ../include/user.h ../modules/user.c tests.c
-
 clean: 
-	rm -f server test/test
+	rm -f server
 
