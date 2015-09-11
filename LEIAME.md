@@ -6,7 +6,8 @@ Este projeto implementa um servidor de IRC básico, que
 responde a um subconjunto dos comandos do protocolo de
 Internet Relay Chat.
 
-Este documento está organizado da seguinte forma:
+Este documento está escrito em **GitHub markdown** (`.md`),
+e está organizado da seguinte forma:
 
 1. Descrição do Servidor
 2. Lista de Arquivos
@@ -26,12 +27,9 @@ esperará conexões.
 
 Os clientes `irssi` e `xchat` foram utilizados para
 a compreensão das mensagens trocadas entre cliente e
-servidor IRC. Este servidor é compatível com os dois 
-clientes, mas os comandos especiais não foram testados 
+servidor IRC. Este servidor é compatível com os dois
+clientes, mas os comandos especiais não foram testados
 no `irssi`.
-
-A implementação do DCC não foi capaz de estabelecer
-a troca de arquivos.
 
 Para se conectar ao servidor:
 
@@ -112,9 +110,25 @@ Esta seção detalha os arquivos e diretórios do projeto.
 
         Registra um usuário.
 
+    * `void receive_macdata(User *, char *);`:
+
+        Envia data no formato dd/mm/aaaa.
+
+    * `void receive_machora(User *, char *);`:
+
+        Envia hora no formato hh:mm:ss--tz.
+
+    * `void receive_mactemp(User *, char *);`:
+
+        Envia temperatura em São Paulo e URL.
+
     * `void receive_who(Node *, char *, char *);`:
 
         Responde ao comando WHO, processando a lista de usuários.
+
+    * `void receive_dcc(User *, Node *, char *, char *);`:
+
+        Redireciona pedido de troca de arquivo entre clientes.
 
     * `void receive_list(User *, Node *, char *);`:
 
@@ -224,3 +238,19 @@ Esta seção detalha os arquivos e diretórios do projeto.
     * `void send_others(char *, char *, char *, Node *);`:
 
         Envia uma mensagem a todos os usuários, menos ao remetente.
+
+    * `void send_names(User *, Node *, char *);`:
+
+        Resposta a /NAMES.
+
+    * `void send_user_info(User *, User *, char *);`:
+
+        Envia as informações de um usuário, em resposta a WHO.
+
+    * `void send_others_info(User *, Node *, char *);`:
+
+        Envia informações de usuários no servidor. (WHO sem parâmetros)
+
+    * `void send_channel_users_info(User *, Node *, char *, char *);`:
+
+        Envia os usuários de um canal a todos.
