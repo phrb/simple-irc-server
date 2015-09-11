@@ -4,7 +4,7 @@ char *WELCOME_01      = ":irc.progredes.org NOTICE * :*** Bem-Vindo!\n";
 char *WELCOME_02      = ":irc.progredes.org NOTICE * :*** Registrando...\n";
 char *WELCOME_03      = ":irc.progredes.org NOTICE * :*** Pronto!\n";
 char *WELCOME_USER_01 = ":irc.progredes.org 001 ";
-char *WELCOME_USER_02 = " :Bem-Vindo. Seu hostname é  ";
+char *WELCOME_USER_02 = " :Bem-Vindo. Seu hostname é ";
 
 char *DUMMY_USER      = "unnamed_user";
 char *DUMMY_CHANNEL   = "*";
@@ -29,5 +29,4 @@ char *LIST_HEADER     = " Channel :Users Name\n";
 char *DCC_START       = "\001DCC ";
 char *DCC_END         = "\001\n";
 
-char *NICKNAMEINUSE   = " :Nickname is already in use\n";
 char *NONICKNAMEGIVEN = " :No nickname given\n";

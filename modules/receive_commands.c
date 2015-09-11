@@ -15,12 +15,15 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
     if(name == NULL) {
         send_line = stradd(send_line, ERR_NONICKNAMEGIVEN);
         send_line = stradd(send_line, NONICKNAMEGIVEN);
+        send_line = stradd(send_line, "\n");
     }
     else if(get_user_by_name(users, name) != NULL) {
         send_line = stradd(send_line, ERR_NICKNAMEINUSE);
         send_line = stradd(send_line, " ");
         send_line = stradd(send_line, name);
-        send_line = stradd(send_line, NICKNAMEINUSE);
+        send_line = stradd(send_line, " ");
+        send_line = stradd(send_line, name);
+        send_line = stradd(send_line, "\n");
     }
     else {
         send_line = stradd(send_line, NICK);
@@ -32,6 +35,9 @@ void receive_nick(User *user, Node *users, char *name, char *send_line) {
         return;
     };
     write(user->socket, send_line, strlen(send_line));
+    if(strcmp(user->current_channel, DUMMY_CHANNEL) != 0) {
+        send_names(user, users, send_line);
+    };
 };
 
 void receive_user(User *user, char *send_line) {
