@@ -24,8 +24,8 @@
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
-Node *user_list;
-pthread_mutex_t user_list_mutex;
+extern Node *user_list;
+extern pthread_mutex_t user_list_mutex;
 
 void connect_user(User *);
 
