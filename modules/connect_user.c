@@ -1,5 +1,8 @@
 #include "../include/connect_user.h"
 
+Node *user_list;
+pthread_mutex_t user_list_mutex;
+
 void connect_user(User *user) {
     printf("[Usuario %d conectou-se ao servidor, esperando mensagens]\n", user->id);
     char recvline[MAXLINE + 1];
